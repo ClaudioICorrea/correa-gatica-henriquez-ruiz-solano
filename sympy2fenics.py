@@ -1,17 +1,9 @@
-# Modified by RRB: added omega, dot, outer, elem_mult
+# Modified by RRB: added omega, dot, outer
 
 from sympy import symbols, printing, sympify, Matrix
 
 # pylint: disable=invalid-name
 
-
-def elem_mult(u,v):
-    if len(u) == 2:
-        return Matrix([u[0]*v[0],u[1]*v[1]])
-
-    elif len(u) == 3:
-        return Matrix([u[0]*v[0],u[1]*v[1],u[2]*v[2]])
-    
 def omega(u):
     return grad(u) - epsilon(u)
 
