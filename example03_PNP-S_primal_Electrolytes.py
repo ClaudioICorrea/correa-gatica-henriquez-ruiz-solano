@@ -1,0 +1,187 @@
+'''
+Poisson--Nernst--Planck/Stokes equations
+
+Strong primal form (m,n are the concentrations of positively and negatively charged species, respectively) 
+
+                      1/Sc*d/dt u - Delta(u) + grad(p) = -kappa/(2*eps**2)*(xi1-xi2)*grad(chi)
+                                                div(u) = 0
+ d/dt xi1 + u.grad(xi1) - div(grad(xi1)+xi1*grad(chi)) = 0
+ d/dt xi2 + u.grad(xi2) - div(grad(xi2)-xi2*grad(chi)) = 0
+                      -div(2*eps**2*grad(chi)) = xi1-xi2
+
+BCs : 
+
+On y=0 (membrane surface): 
+ xi1=2, chi=0, zero-flux for xi2, u = 0
+
+On y=1 (reservoir): 
+    xi1 = xi2 = 1, chi=120, u = 0
+
+On left, right: 
+    periodic for u,chi,xi1,xi2
+
+As velocity is prescribed everywhere, we fix the mean value of pressure with a real Lagrange multiplier
+Formulation and parameters from Karatay et al and Wang et al (a bit clearer than Kim et al)
+
+'''
+
+from fenics import *
+import numpy as np
+parameters["form_compiler"]["representation"] = "uflacs"
+parameters["form_compiler"]["cpp_optimize"] = True
+
+fileO = XDMFFile("outputs/out-CoupledS-PNP-primal.xdmf")
+fileO.parameters["functions_share_mesh"] = True
+fileO.parameters['rewrite_function_mesh'] = False
+fileO.parameters["flush_output"] = True
+
+# ************ Time units *********************** #
+
+time = 0.0; Tfinal = 1.1e-3;  dt = 1.e-6; 
+inc = 0;   frequency = 20;
+
+# ****** Model coefficients ****** #
+#sc 1e3 eps 2e-3
+Sc  = Constant(2.e3) # Schmidt number
+eps = Constant(2.e-3) # electrostatic screening length (no convergence with 1e-3)
+kappa = Constant(0.5) # electrohydrodynamic coupling constant
+
+chibot = Constant(0.) # applied voltage bottom
+chitop = Constant(120.) # applied voltage top
+xi1bot   = Constant(2.) # boundary cation concentration bottom
+xitop  = Constant(1.) # boundary concentration top 
+
+
+epshat = Constant(2*eps**2)
+# ********** Mesh construction and boundary labels **************** #
+
+def gradedMesh(lx,ly, Nx, Ny):
+    m = UnitSquareMesh(Nx, Ny,'crossed')
+    x = m.coordinates()
+
+    #Refine on bottom only
+    x[:,1] = x[:,1] - 1
+    x[:,1] = np.cos(np.pi * (x[:,1] - 1.) / 2.) + 1.      
+
+    #Scale
+    x[:,0] = x[:,0]*lx; x[:,1] = x[:,1]*ly
+
+    return m
+
+mesh = gradedMesh(2,1,120,90)
+
+bdry = MeshFunction("size_t", mesh, 1)
+bdry.set_all(0)
+bot = 31; top =32; 
+GTop   = CompiledSubDomain("near(x[1],1) && on_boundary")
+GBot   = CompiledSubDomain("near(x[1],0) && on_boundary")
+GTop.mark(bdry,top); GBot.mark(bdry,bot); 
+ds = Measure("ds", subdomain_data = bdry)
+
+class PeriodicBoundary(SubDomain):
+
+    # Left boundary is target
+    def inside(self, x, on_boundary):
+        return bool(near(x[0],0) and on_boundary)
+
+    # Map right boundary to target
+    def map(self, x, y):
+        y[0] = x[0] - 2.0
+        y[1] = x[1]
+
+# *********** Finite element spaces (MINI + Lagrange) ************* #
+
+P1  = FiniteElement('CG', mesh.ufl_cell(), 1)
+Bub = FiniteElement("Bubble", mesh.ufl_cell(), 3)
+P1b = VectorElement(P1 + Bub)
+R0  = FiniteElement('R', mesh.ufl_cell(), 0)
+
+Hh  = FunctionSpace(mesh, MixedElement([P1b,P1,P1,P1,P1,R0]),\
+                    constrained_domain=PeriodicBoundary())
+
+print (" ****** Total DoF = ", Hh.dim())
+    
+# *********** Trial and test functions ********** #
+
+Utrial = TrialFunction(Hh)
+Usol = Function(Hh)
+u, p, xi1, xi2, chi, zeta = split(Usol)
+v, q, eta1, eta2, lam, theta = TestFunctions(Hh)
+
+#******** boundary conditions on top and bottom *********
+
+# need to 'project' when dealing with enriched spaces
+zv = project(Constant((0,0)),Hh.sub(0).collapse())
+
+bcU1   = DirichletBC(Hh.sub(0), zv,     bdry, bot)
+bcU2   = DirichletBC(Hh.sub(0), zv,     bdry, top)
+bcXi1a = DirichletBC(Hh.sub(2), xi1bot, bdry, bot)
+bcXi1b = DirichletBC(Hh.sub(2), xitop,  bdry, top)
+bcXi2  = DirichletBC(Hh.sub(3), xitop,  bdry, top)
+bcChia = DirichletBC(Hh.sub(4), chibot, bdry, bot)
+bcChib = DirichletBC(Hh.sub(4), chitop, bdry, top)
+bcs    = [bcU1,bcU2,bcXi1a,bcXi1b,bcXi2,bcChia,bcChib]
+
+# ***** 2% of random perturbation on the initial conditions ***** # 
+
+pert = Function(Hh.sub(3).collapse())
+pert.vector()[:] = np.random.uniform(0.98,1.0,pert.vector().get_local().size)
+xi10  = Expression("i*(2-x[1])", i=pert, degree=1)
+xi20  = Expression("i*x[1]", i=pert,  degree=1)
+xi1old = interpolate(xi10,Hh.sub(2).collapse())
+xi2old = interpolate(xi20,Hh.sub(3).collapse())
+uold = project(zv,Hh.sub(0).collapse())
+
+# *************** Variational forms ***************** #
+
+# momentum and mass 
+FF = 1./(Sc*dt)*dot(u-uold,v)*dx \
+    + inner(grad(u),grad(v))*dx \
+    - p * div(v) * dx \
+    - q * div(u) * dx \
+    + kappa/epshat*(xi1-xi2)*dot(grad(chi),v)*dx
+     
+# fixing zero-average pressure with Lagrange multiplier
+FF += p * theta * dx + q * zeta * dx
+ 
+# positive charge
+FF += 1./dt*(xi1-xi1old)*eta1*dx \
+    + dot(u,grad(xi1))*eta1*dx \
+    + dot(grad(xi1)+xi1*grad(chi),grad(eta1))*dx
+    
+# negative charge
+FF += 1./dt*(xi2-xi2old)*eta2*dx \
+    + dot(u,grad(xi2))*eta2*dx \
+    + dot(grad(xi2)-xi2*grad(chi),grad(eta2))*dx
+
+# Poisson
+FF += epshat*dot(grad(chi),grad(lam))*dx \
+    -(xi1-xi2)*lam*dx
+
+# Construction of tangent problem 
+Tang = derivative(FF, Usol, Utrial)
+problem = NonlinearVariationalProblem(FF, Usol, bcs, J=Tang)
+solver  = NonlinearVariationalSolver(problem)
+solver.parameters['nonlinear_solver']                    = 'newton'
+solver.parameters['newton_solver']['linear_solver']      = 'mumps'
+solver.parameters['newton_solver']['absolute_tolerance'] = 1e-6
+solver.parameters['newton_solver']['relative_tolerance'] = 1e-6
+solver.parameters['newton_solver']['maximum_iterations'] = 35
+
+# ********* Time loop ************* #
+
+while (time <= Tfinal):
+    
+    print("time = %1.3e" % time)
+    solver.solve()
+    uh, ph, xi1h, xi2h, chih, zetah = Usol.split()
+    assign(uold,uh); assign(xi1old,xi1h); assign(xi2old,xi2h); 
+
+    if (inc % frequency == 0):
+        uh.rename("u","u"); fileO.write(uh,time)
+        ph.rename("p","p"); fileO.write(ph,time)
+        xi1h.rename("xi1","xi1"); fileO.write(xi1h,time)
+        xi2h.rename("xi2","xi2"); fileO.write(xi2h,time)
+        chih.rename("chi","chi"); fileO.write(chih,time)
+        
+    inc += 1; time += dt

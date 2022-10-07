@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+<Xdmf Version="3.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <Domain>
+    <Grid Name="TimeSeries" GridType="Collection" CollectionType="Temporal">
+      <Grid Name="mesh" GridType="Uniform">
+        <Topology NumberOfElements="16" TopologyType="Triangle" NodesPerElement="3">
+          <DataItem Dimensions="16 3" NumberType="UInt" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/Mesh/0/mesh/topology</DataItem>
+        </Topology>
+        <Geometry GeometryType="XY">
+          <DataItem Dimensions="13 2" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/Mesh/0/mesh/geometry</DataItem>
+        </Geometry>
+        <Time Value="0.000000000000000e+00" />
+        <Attribute Name="u" AttributeType="Vector" Center="Cell">
+          <DataItem Dimensions="16 3" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/0</DataItem>
+        </Attribute>
+        <Attribute Name="p" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="16 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/1</DataItem>
+        </Attribute>
+        <Attribute Name="chi" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="16 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/2</DataItem>
+        </Attribute>
+        <Attribute Name="xi1" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="16 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/3</DataItem>
+        </Attribute>
+        <Attribute Name="xi2" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="16 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/4</DataItem>
+        </Attribute>
+      </Grid>
+      <Grid Name="mesh" GridType="Uniform">
+        <Topology NumberOfElements="64" TopologyType="Triangle" NodesPerElement="3">
+          <DataItem Dimensions="64 3" NumberType="UInt" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/Mesh/5/mesh/topology</DataItem>
+        </Topology>
+        <Geometry GeometryType="XY">
+          <DataItem Dimensions="41 2" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/Mesh/5/mesh/geometry</DataItem>
+        </Geometry>
+        <Time Value="1.000000000000000e+00" />
+        <Attribute Name="u" AttributeType="Vector" Center="Cell">
+          <DataItem Dimensions="64 3" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/5</DataItem>
+        </Attribute>
+        <Attribute Name="p" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="64 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/6</DataItem>
+        </Attribute>
+        <Attribute Name="chi" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="64 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/7</DataItem>
+        </Attribute>
+        <Attribute Name="xi1" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="64 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/8</DataItem>
+        </Attribute>
+        <Attribute Name="xi2" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="64 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/9</DataItem>
+        </Attribute>
+      </Grid>
+      <Grid Name="mesh" GridType="Uniform">
+        <Topology NumberOfElements="256" TopologyType="Triangle" NodesPerElement="3">
+          <DataItem Dimensions="256 3" NumberType="UInt" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/Mesh/10/mesh/topology</DataItem>
+        </Topology>
+        <Geometry GeometryType="XY">
+          <DataItem Dimensions="145 2" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/Mesh/10/mesh/geometry</DataItem>
+        </Geometry>
+        <Time Value="2.000000000000000e+00" />
+        <Attribute Name="u" AttributeType="Vector" Center="Cell">
+          <DataItem Dimensions="256 3" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/10</DataItem>
+        </Attribute>
+        <Attribute Name="p" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="256 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/11</DataItem>
+        </Attribute>
+        <Attribute Name="chi" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="256 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/12</DataItem>
+        </Attribute>
+        <Attribute Name="xi1" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="256 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/13</DataItem>
+        </Attribute>
+        <Attribute Name="xi2" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="256 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/14</DataItem>
+        </Attribute>
+      </Grid>
+      <Grid Name="mesh" GridType="Uniform">
+        <Topology NumberOfElements="1024" TopologyType="Triangle" NodesPerElement="3">
+          <DataItem Dimensions="1024 3" NumberType="UInt" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/Mesh/15/mesh/topology</DataItem>
+        </Topology>
+        <Geometry GeometryType="XY">
+          <DataItem Dimensions="545 2" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/Mesh/15/mesh/geometry</DataItem>
+        </Geometry>
+        <Time Value="3.000000000000000e+00" />
+        <Attribute Name="u" AttributeType="Vector" Center="Cell">
+          <DataItem Dimensions="1024 3" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/15</DataItem>
+        </Attribute>
+        <Attribute Name="p" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="1024 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/16</DataItem>
+        </Attribute>
+        <Attribute Name="chi" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="1024 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/17</DataItem>
+        </Attribute>
+        <Attribute Name="xi1" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="1024 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/18</DataItem>
+        </Attribute>
+        <Attribute Name="xi2" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="1024 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/19</DataItem>
+        </Attribute>
+      </Grid>
+      <Grid Name="mesh" GridType="Uniform">
+        <Topology NumberOfElements="4096" TopologyType="Triangle" NodesPerElement="3">
+          <DataItem Dimensions="4096 3" NumberType="UInt" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/Mesh/20/mesh/topology</DataItem>
+        </Topology>
+        <Geometry GeometryType="XY">
+          <DataItem Dimensions="2113 2" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/Mesh/20/mesh/geometry</DataItem>
+        </Geometry>
+        <Time Value="4.000000000000000e+00" />
+        <Attribute Name="u" AttributeType="Vector" Center="Cell">
+          <DataItem Dimensions="4096 3" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/20</DataItem>
+        </Attribute>
+        <Attribute Name="p" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="4096 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/21</DataItem>
+        </Attribute>
+        <Attribute Name="chi" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="4096 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/22</DataItem>
+        </Attribute>
+        <Attribute Name="xi1" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="4096 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/23</DataItem>
+        </Attribute>
+        <Attribute Name="xi2" AttributeType="Scalar" Center="Cell">
+          <DataItem Dimensions="4096 1" Format="HDF">PNPS-Ex01Accuracy-Picard.h5:/VisualisationVector/24</DataItem>
+        </Attribute>
+      </Grid>
+    </Grid>
+  </Domain>
+</Xdmf>
