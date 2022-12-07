@@ -1,16 +1,16 @@
 '''
 Convergence test for a triple mixed scheme for the stationary 
-Poisson-Nernst-Planck /  NAVIER-Stokes coupled equations
-Domain is (0,1)^3
+Poisson-Nernst-Planck / NAVIER- Stokes coupled equations
+Domain is (0,1)^2
 Manufactured smooth solutions
 Nonlinearities treated via automatic Newton-Raphson
 
 strong primal form: 
------Stokes-Equations--------
-lambda*u.grad(u) -mu*laplacian(u) + grad(p) = - (xi1-xi2)*varphi/epsilon + ff in Omega 
-                                     div(u) = 0 in Omega
-                                          u = gg on Gamma
-                               int_Omega(p) = 0 ,
+-----Navier-Stokes-Equations--------
+lambda*u.grad(u) - mu*laplacian(u) + grad(p) = - (xi1-xi2)*varphi/epsilon + ff in Omega 
+                    div(u) = 0 in Omega
+                         u = gg on Gamma
+              int_Omega(p) = 0 ,
 -----Poisson-Equations--------
       varphi = epsilon*grad(chi) in  Omega                       
 -div(varphi) = (xi1-xi2) + f in Omega
@@ -31,50 +31,53 @@ parameters["form_compiler"]["representation"] = "uflacs"
 parameters["form_compiler"]["cpp_optimize"] = True
 parameters["form_compiler"]["quadrature_degree"] = 4
 
-fileO = XDMFFile("outputs/PNPS-Ex01Accuracy-3D.xdmf")
+fileO = XDMFFile("outputs/PNP-NS-Ex01Accuracy.xdmf")
 fileO.parameters["functions_share_mesh"] = True
 fileO.parameters["flush_output"] = True
 
 
 import sympy2fenics as sf
 def str2exp(s):
-        return sf.sympy2exp(sf.str2sympy(s))
-
+    return sf.sympy2exp(sf.str2sympy(s))
+ 
 # ******* Exact solutions for error analysis ****** #
-u_str = '((sin(pi*x))**2*sin(pi*y)*sin(2*pi*z),sin(pi*x)*(sin(pi*y))**2*sin(2*pi*z),-(sin(2*pi*x)*sin(pi*y)+sin(pi*x)*sin(2*pi*y))*(sin(pi*z))**2)'
-p_str   = 'x**4-0.5*y**4-0.5*z**4'
-chi_str = 'sin(x)*cos(y)*sin(z)'
-xi1_str = 'exp(-x*y+z)'
-xi2_str = 'cos(x*y*z)*cos(x*y*z)'
+u_str   = '(cos(pi*x)*sin(pi*y),-sin(pi*x)*cos(pi*y))'
+p_str   = 'x**4-y**4'
+chi_str = 'sin(x)*cos(y)'
+xi1_str = 'exp(-x*y)'
+xi2_str = 'cos(x*y)*cos(x*y)'
 
 # ******* Model parameters ****** #
 
-epsilon = Constant(0.1)
+epsilon = Constant(1.)
 lmbda  = Constant(1.)
-kappa1 = Constant(0.25)
-kappa2 = Constant(0.5)
-mu     = Constant(0.01)
-dim    = 3
-I = Identity(dim)
 
-#----------------------Ranges r,s,rho,varrho  in  3D ---------------------------#
-# l = 3  where l and j are conjugante to each other                             #
+kappa1 = Constant(0.5)
+kappa2 = Constant(1)
+mu     = Constant(0.1)
+dim    = 2
+I      = Identity(dim)
+
+#----------------------Ranges r,s,rho,varrho  in  2D ---------------------------#
+# l in [2,infty) where l and j are conjugante to each other                     #
 # r   = 2*j   => s       (conjugate of r)                                       #        
 # rho = 2*l   => varrho  (conjugate if rho)                                     #
 # then                                                                          #
-# j = 3/2 , rho = 6, varrho =6/5, r= 3 and s = 3/2                              #
+# j in (1,2] , rho in [4, infty), varrho in (1,4/3] , r in (2,4], s in [4/3,2)  #
+
 
 def conjugate(t):
         tx = t/(t-1)
         return tx
-
-l = Constant(3)
+    
+l = Constant(2)
 j = conjugate(l)
 r = 2*j 
 s = conjugate(r)
 rho =2*l
 varrho = conjugate(rho)
 print("r = ",float(r),", s = ",float(s),", rho = ",float(rho),", varrho= ",float(varrho))
+
 
 nkmax = 5
 
@@ -84,56 +87,52 @@ esig2 = []; rsig2 = []; ep = []; rp = []
 echi = []; rchi = []; ephi = []; rphi = [];
 exi1 = []; exi2 = []; rxi1 = []; rxi2 = [];
 
-
 etot = []; rtot = []; mom = []; ene = []; mass1 =[]; mass2 =[] 
 
 rtot.append(0.); rt.append(0)
-
 ru.append(0.0); rsig.append(0.0); rp.append(0.0)
 rsig1.append(0.0); rsig2.append(0.0); rphi.append(0.0); 
 rxi1.append(0.0); rxi2.append(0.0); rchi.append(0.0); 
+
+
 # polynomial degree
 
-k = 0
+k = 1
 
 for nk in range(nkmax):
     print("....... Refinement level : nk = ", nk)
     
-    nps = pow(2,nk)
-    mesh = UnitCubeMesh(nps,nps,nps)
+    nps = pow(2,nk+1)
+    mesh = UnitSquareMesh(nps,nps)#, 'crossed')
     n = FacetNormal(mesh)
     hh.append(mesh.hmax())
 
     # ********* Finite dimensional spaces ********* #
-    # Navier-Stokes-problem 
-    Hu = VectorElement('DG', mesh.ufl_cell(), k)         # H1 -> (u,v)
-    Htt= VectorElement('DG', mesh.ufl_cell(), k, dim=8)  # H2 -> (t,s)
-    Q = FiniteElement('RT', mesh.ufl_cell(), k+1)        # Q -> (sigma,tau)
-    # PNP problem
-    X = FiniteElement('RT', mesh.ufl_cell(), k+1) # also Hi's 
-    M = FiniteElement('DG', mesh.ufl_cell(), k) # also Qi's
-    # to impose int(tr(sigma)) = constant
-    R_ = FiniteElement('R', mesh.ufl_cell(), 0) 
+    Hu = VectorElement('DG', mesh.ufl_cell(), k)
+    Htt= VectorElement('DG', mesh.ufl_cell(), k, dim=3)    
+    Hs = FiniteElement('RT', mesh.ufl_cell(), k+1) # in FEniCS RTk is understood as RT{k+1} - is a vector-valued space! 
+     
+    X  = FiniteElement('RT', mesh.ufl_cell(), k+1) # also Hi's
+    M  = FiniteElement('DG', mesh.ufl_cell(), k) # also Qi's
+    R0 = FiniteElement('R', mesh.ufl_cell(), 0) # to impose int(tr(sigma)) = constant
 
-    Vh = FunctionSpace(mesh, MixedElement([Hu,Htt,Q,Q,Q,X,M,X,M,X,M,R_]))
+    Vh = FunctionSpace(mesh, MixedElement([Hu,Htt,Hs,Hs,X,M,X,M,X,M,R0]))
     dof.append(Vh.dim())
-
-    print("....... DOFS = ",Vh.dim())
     
     # ********* test and trial functions ****** #
 
     trial = TrialFunction(Vh)
     sol   = Function(Vh)
 
-  #Hu, Htt,    Q,    Q,    Q,   X,   M,    X,    M,    X,   M,   R
-    v,  s_, taux, tauy, tauz, psi, lam, tau1, eta1, tau2, eta2,  zeta  = TestFunctions(Vh)
-    u,  t_, sigx, sigy, sigz, phi, chi, sig1,  xi1, sig2,  xi2,  theta = split(sol)
 
+    #Hu, Htt, Hsig, Hsig,    X,   M,    X,   M,    X,    M, R
+    v,    s_, taux, tauy, psi, lam, tau1,eta1, tau2, eta2, zeta  = TestFunctions(Vh)
+    u,    t_, sigx, sigy, phi, chi, sig1, xi1, sig2,  xi2, theta = split(sol)
 
-    tt = as_tensor(((t_[0],t_[1],t_[2]),(t_[3],t_[4],t_[5]),(t_[6],t_[7],-t_[0]-t_[4])))
-    ss = as_tensor(((s_[0],s_[1],s_[2]),(s_[3],s_[4],s_[5]),(s_[6],s_[7],-s_[0]-s_[4])))
-    tau = as_tensor((taux,tauy,tauz))
-    sig = as_tensor((sigx,sigy,sigz))
+    tt = as_tensor(((t_[0], t_[1]),(t_[2],-t_[0])))
+    ss = as_tensor(((s_[0], s_[1]),(s_[2],-s_[0])))
+    tau = as_tensor((taux,tauy))
+    sig = as_tensor((sigx,sigy))
     
     # ********* instantiation of exact solutions ****** #
     
@@ -163,8 +162,8 @@ for nk in range(nkmax):
 
     # all imposed naturally 
     
-    # ********* Variational form ********* #
-    
+    # ********* Variational forms ********* #
+
     # ---- NS ----- # 
     aa_uv  = mu*inner(tt,ss)*dx
     cc_uuv = 0.5*lmbda*(dot(tt*u,v) - inner(outer(u,u),ss))*dx
@@ -193,7 +192,7 @@ for nk in range(nkmax):
     # ---- Lagrange multiplier to impose trace of sigma --- # 
     ZZ = (tr(sig + lmbda*0.5*outer(u,u))- tr(sig_ex + lmbda*0.5*outer(u_ex,u_ex))) * zeta * dx \
         + tr(tau) * theta * dx
-    
+
     # global nonlinear variational form 
     Nonl = aa_uv + cc_uuv + bb_vsi  - FF_v   \
          + bb_uta                   - GG_tau \
@@ -203,8 +202,8 @@ for nk in range(nkmax):
          + ci_se - di_xe            - Gi_e   \
          + ZZ 
          
+    
     Tang = derivative(Nonl, sol, trial)
-    #Tang = derivative(FF, sol, trial)
     problem = NonlinearVariationalProblem(Nonl, sol, J=Tang)
     solver  = NonlinearVariationalSolver(problem)
     solver.parameters['nonlinear_solver']                    = 'newton'
@@ -213,18 +212,33 @@ for nk in range(nkmax):
     solver.parameters['newton_solver']['relative_tolerance'] = 1e-6
     solver.parameters['newton_solver']['maximum_iterations'] = 25
     
-    solver.solve()
-    #niters.append(niters_[0])
+    niters_=solver.solve()
+    niters.append(niters_[0])
     
-    u_h, th_, sigx_h, sigy_h, sigz_h, phi_h, chi_h, sig1_h, xi1_h, sig2_h, xi2_h  ,theta_h = sol.split()
+    u_h, th_, sigx_h, sigy_h, phi_h, chi_h, sig1_h, xi1_h, sig2_h, xi2_h  ,theta_h = sol.split()
 
-    tt_h = as_tensor(((th_[0],th_[2],th_[3]),(th_[4],th_[1],th_[5]),(th_[6],th_[7],-th_[0]-th_[1])))
-
-    sig_h = as_tensor((sigx_h,sigy_h,sigz_h))
+    tt_h = as_tensor(((th_[0], th_[1]),(th_[2],-th_[0])))
+    sig_h = as_tensor((sigx_h,sigy_h))
 
     Ph = FunctionSpace(mesh, 'DG', k) # trace of sigma
-
+    
     p_h = project(-1./dim*tr(sig_h + 0.5*lmbda*outer(u_h,u_h)), Ph)
+
+    mom_h = project(ff + div(sig_h) - lmbda*0.5*tt_h*u_h - (xi1_h-xi2_h)/epsilon*phi_h,Vh.sub(0).collapse()) 
+
+    mass1_h = project(xi1_h - div(sig1_h) - f1,Ph)
+    mass2_h = project(xi2_h - div(sig2_h) - f2,Vh.sub(5).collapse())
+    energy_h = project(div(phi_h) + (xi1_h-xi2_h) + f,Ph)
+
+    
+    mom.append(norm(mom_h.vector(),'linf'))
+    ene.append(norm(energy_h.vector(),'linf'))
+    mass1.append(norm(mass1_h.vector(),'linf'))
+    mass2.append(norm(mass2_h.vector(),'linf'))
+    #def mu_new(t):
+    #   return a*inner(t,t)+b
+    #mu_new = lambda t : a*inner(t,t)+b
+
     
     u_h.rename("u","u"); fileO.write(u_h,1.*nk)
     p_h.rename("p","p"); fileO.write(p_h,1.*nk)
@@ -269,9 +283,6 @@ for nk in range(nkmax):
             + pow(assemble(abs(div(sig2_ex)-div(sig2_h))**varrho*dx),1./varrho)
 
     E_xi2= pow(assemble(abs(xi2_h-xi2_ex)**rho*dx), 1./rho)
- 
-
-
 
     esig.append(float(E_sig)); et.append(float(E_t));
     ephi.append(float(E_phi))
@@ -304,43 +315,11 @@ for nk in range(nkmax):
 print('=======================================================================')
 
 
-'''
+
 print('=======================================================================')
 print('  DoFs    h   e(tot) r(tot)  mom_h it')
 print('=======================================================================')
 for nk in range(nkmax):
     print('{:6d}  {:.3f} {:1.2e} {:.2f} {:1.2e} {:1.2e} {:1.2e} {:1.2e} {:2d}'.format(dof[nk], hh[nk], etot[nk], rtot[nk], mom[nk], mass1[nk], mass2[nk], ene[nk], niters[nk]))
 print('=======================================================================')
-'''
-
-'''
-
-
-    esig.append(float(E_sig)); ephi.append(float(E_phi))
-    esig1.append(float(E_sig1)); esig2.append(float(E_sig2))
-    exi1.append(float(E_xi1)); exi2.append(float(E_xi2))
-    echi.append(float(E_chi)); 
-    eu.append(float(E_u)); ep.append(float(E_p))
-    
-    if(nk>0):
-        ru.append(ln(eu[nk]/eu[nk-1])/ln(hh[nk]/hh[nk-1]))
-        rsig.append(ln(esig[nk]/esig[nk-1])/ln(hh[nk]/hh[nk-1]))
-        rsig1.append(ln(esig1[nk]/esig1[nk-1])/ln(hh[nk]/hh[nk-1]))
-        rsig2.append(ln(esig2[nk]/esig2[nk-1])/ln(hh[nk]/hh[nk-1]))
-        rp.append(ln(ep[nk]/ep[nk-1])/ln(hh[nk]/hh[nk-1]))
-        rphi.append(ln(ephi[nk]/ephi[nk-1])/ln(hh[nk]/hh[nk-1]))
-        rchi.append(ln(echi[nk]/echi[nk-1])/ln(hh[nk]/hh[nk-1]))
-        rxi1.append(ln(exi1[nk]/exi1[nk-1])/ln(hh[nk]/hh[nk-1]))
-        rxi2.append(ln(exi2[nk]/exi2[nk-1])/ln(hh[nk]/hh[nk-1]))
-        
-
-# ********* Generating error history ****** #
-print('=======================================================================')
-print('  DoFs     h   e(sig) r(sig)  e(u) r(u)  e(p)  r(p)  e(phi) r(phi)  e(chi) r(chi) e(sig1) r(sig1) e(xi1) r(xi1)  e(sig2) r(sig2) e(xi2) r(xi2)  ')
-print('=======================================================================')
-for nk in range(nkmax):
-    print('{:6d}  {:.3f} {:1.2e} {:.2f} {:1.2e} {:.2f} {:1.2e} {:.2f} {:1.2e} {:.2f} {:1.2e} {:.2f} {:1.2e} {:.2f} {:1.2e} {:.2f} {:1.2e} {:.2f} {:1.2e} {:.2f}'.format(dof[nk], hh[nk], esig[nk], rsig[nk], eu[nk], ru[nk], ep[nk], rp[nk], ephi[nk], rphi[nk], echi[nk], rchi[nk], esig1[nk], rsig1[nk], exi1[nk], rxi1[nk], esig2[nk], rsig2[nk], exi2[nk], rxi2[nk]))
-print('=======================================================================')
-
-'''
 

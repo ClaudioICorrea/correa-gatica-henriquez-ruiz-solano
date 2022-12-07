@@ -147,42 +147,6 @@
           <DataItem Dimensions="545 3" Format="HDF">PNPS-Ex01Accuracy.h5:/VisualisationVector/35</DataItem>
         </Attribute>
       </Grid>
-      <Grid Name="mesh" GridType="Uniform">
-        <Topology NumberOfElements="4096" TopologyType="Triangle" NodesPerElement="3">
-          <DataItem Dimensions="4096 3" NumberType="UInt" Format="HDF">PNPS-Ex01Accuracy.h5:/Mesh/36/mesh/topology</DataItem>
-        </Topology>
-        <Geometry GeometryType="XY">
-          <DataItem Dimensions="2113 2" Format="HDF">PNPS-Ex01Accuracy.h5:/Mesh/36/mesh/geometry</DataItem>
-        </Geometry>
-        <Time Value="4.000000000000000e+00" />
-        <Attribute Name="u" AttributeType="Vector" Center="Node">
-          <DataItem Dimensions="2113 3" Format="HDF">PNPS-Ex01Accuracy.h5:/VisualisationVector/36</DataItem>
-        </Attribute>
-        <Attribute Name="p" AttributeType="Scalar" Center="Node">
-          <DataItem Dimensions="2113 1" Format="HDF">PNPS-Ex01Accuracy.h5:/VisualisationVector/37</DataItem>
-        </Attribute>
-        <Attribute Name="chi" AttributeType="Scalar" Center="Node">
-          <DataItem Dimensions="2113 1" Format="HDF">PNPS-Ex01Accuracy.h5:/VisualisationVector/38</DataItem>
-        </Attribute>
-        <Attribute Name="xi1" AttributeType="Scalar" Center="Node">
-          <DataItem Dimensions="2113 1" Format="HDF">PNPS-Ex01Accuracy.h5:/VisualisationVector/39</DataItem>
-        </Attribute>
-        <Attribute Name="xi2" AttributeType="Scalar" Center="Node">
-          <DataItem Dimensions="2113 1" Format="HDF">PNPS-Ex01Accuracy.h5:/VisualisationVector/40</DataItem>
-        </Attribute>
-        <Attribute Name="sig" AttributeType="Tensor" Center="Node">
-          <DataItem Dimensions="2113 9" Format="HDF">PNPS-Ex01Accuracy.h5:/VisualisationVector/41</DataItem>
-        </Attribute>
-        <Attribute Name="phi" AttributeType="Vector" Center="Node">
-          <DataItem Dimensions="2113 3" Format="HDF">PNPS-Ex01Accuracy.h5:/VisualisationVector/42</DataItem>
-        </Attribute>
-        <Attribute Name="sig1" AttributeType="Vector" Center="Node">
-          <DataItem Dimensions="2113 3" Format="HDF">PNPS-Ex01Accuracy.h5:/VisualisationVector/43</DataItem>
-        </Attribute>
-        <Attribute Name="sig2" AttributeType="Vector" Center="Node">
-          <DataItem Dimensions="2113 3" Format="HDF">PNPS-Ex01Accuracy.h5:/VisualisationVector/44</DataItem>
-        </Attribute>
-      </Grid>
     </Grid>
   </Domain>
 </Xdmf>
