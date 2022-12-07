@@ -6,7 +6,7 @@ Manufactured smooth solutions
 Nonlinearities treated via automatic Newton-Raphson
 
 strong primal form: 
------Stokes-Equations--------
+-----Navier-Stokes-Equations--------
 lambda*u.grad(u) -mu*laplacian(u) + grad(p) = - (xi1-xi2)*varphi/epsilon + ff in Omega 
                                      div(u) = 0 in Omega
                                           u = gg on Gamma
